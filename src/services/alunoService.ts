@@ -1,16 +1,16 @@
 import api from './api';
-import type { Aluno, AlunoRequest } from '../types';
+import type { Aluno, AlunoRequest, PaginatedResponse } from '../types';
 
 export const alunoService = {
     
   getAll: async (): Promise<Aluno[]> => {
-    const response = await api.get<Aluno[]>('/alunos');
-    return response.data;
+    const response = await api.get<PaginatedResponse<Aluno>>('/alunos');
+    return response.data.data; 
   },
 
   getMatriculados: async (): Promise<Aluno[]> => {
-    const response = await api.get<Aluno[]>('/alunos/matriculados');
-    return response.data;
+    const response = await api.get<PaginatedResponse<Aluno>>('/alunos/matriculados');
+    return response.data.data; 
   },
 
   getById: async (id: string): Promise<Aluno> => {

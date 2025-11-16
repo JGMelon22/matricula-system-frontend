@@ -43,3 +43,11 @@ export interface ApiErrorResponse {
   code: number;
   description: string;
 }
+
+export interface PaginatedResponse<T> {
+  pageNumber: number;
+  pageSize: number;
+  totalRecords: number;
+  totalPages: number;
+  data: T[];
+}

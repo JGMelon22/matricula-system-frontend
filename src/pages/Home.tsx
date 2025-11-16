@@ -102,7 +102,7 @@ const Home = () => {
                     <Card className="shadow-sm">
                         <CardBody>
                             <CardTitle tag="h5">Como Usar</CardTitle>
-                            <CardText>
+                            <CardText tag="div">
                                 <ol>
                                     <li><strong>Cursos:</strong> Cadastre os cursos disponíveis na instituição</li>
                                     <li><strong>Alunos:</strong> Cadastre os alunos (apenas maiores de 18 anos)</li>

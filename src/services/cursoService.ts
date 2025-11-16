@@ -1,12 +1,11 @@
 import api from './api';
-import type { Curso, CursoRequest } from '../types';
+import type { Curso, CursoRequest, PaginatedResponse } from '../types';
 
 export const cursoService = {
     getAll: async (): Promise<Curso[]> => {
-        const response = await api.get<Curso[]>('/cursos');
-        return response.data;
-    },
-
+        const response = await api.get<PaginatedResponse<Curso>>('/cursos');
+        return response.data.data; 
+      },
     getById: async (id: string): Promise<Curso> => {
         const response = await api.get<Curso>(`/cursos/${id}`);
         return response.data;
