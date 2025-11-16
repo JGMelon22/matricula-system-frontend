@@ -10,6 +10,15 @@ Este é um sistema completo de gerenciamento de matrículas que permite:
 - Realização e controle de matrículas
 - Visualização de estatísticas e relatórios
 
+## 🖼️ Demonstração Visual
+
+<img width="600" alt="Screenshot 2025-11-16 at 15-51-34 student-registration-system-frontend" src="https://github.com/user-attachments/assets/e65362dd-0dc5-40f4-82be-69294394e7aa" />
+<img width="600" alt="Screenshot 2025-11-16 at 15-51-43 student-registration-system-frontend" src="https://github.com/user-attachments/assets/1188f447-e038-4658-851b-466e1cc53705" />
+<img width="600" alt="Screenshot 2025-11-16 at 15-51-50 student-registration-system-frontend" src="https://github.com/user-attachments/assets/26415b45-2be9-4d26-be30-9fc7bb20fa6e" />
+<img width="600" alt="Screenshot 2025-11-16 at 15-52-05 student-registration-system-frontend" src="https://github.com/user-attachments/assets/f516789a-ddce-441f-86fe-f12641f698f9" />
+<img width="600" alt="Screenshot 2025-11-16 at 15-52-10 student-registration-system-frontend" src="https://github.com/user-attachments/assets/3f6f8319-a4c3-4ee3-85cd-96360c4791a5" />
+<img width="600" alt="Screenshot 2025-11-16 at 15-52-17 student-registration-system-frontend" src="https://github.com/user-attachments/assets/eeea2af7-c47e-4190-95bb-7611727972e6" />
+
 ## 🚀 Tecnologias Utilizadas
 
 - **React 19** - Biblioteca JavaScript para construção de interfaces
@@ -40,7 +49,8 @@ npm install
 Antes de executar a aplicação, certifique-se de que a API backend está configurada e rodando. A URL base da API está configurada em `src/services/api.ts`:
 
 ```typescript
-const API_BASE_URL = 'https://localhost:7034/api';
+const API_BASE_URL = 'https://localhost:7034/api'; // Se usar o projeto local
+const API_BASE_URL = 'https://localhost:32799/api'; // Se usar imagem docker da API
 ```
 
 Se necessário, ajuste esta URL para apontar para o seu servidor de API.
@@ -112,11 +122,10 @@ src/
 
 - `npm run dev` - Inicia o servidor de desenvolvimento
 - `npm run build` - Gera a build de produção
-- `npm run preview` - Visualiza a build de produção
 - `npm run lint` - Executa o linter ESLint
 
 ## 📝 Requisitos
 
 - Node.js (versão 22 ou superior recomendada)
-- npm ou yarn
+- npm
 - API backend rodando e acessível
