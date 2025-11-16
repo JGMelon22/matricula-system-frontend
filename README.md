@@ -57,18 +57,53 @@ Se necessário, ajuste esta URL para apontar para o seu servidor de API.
 
 ## ▶️ Executando a Aplicação
 
+### Usando Docker Compose (Recomendado)
+
+A forma mais simples de executar a aplicação é usando Docker Compose:
+
+```bash
+docker-compose up --build
+```
+
+Ou para executar em background:
+
+```bash
+docker-compose up -d --build
+```
+
+A aplicação estará disponível em `http://localhost:5173`.
+
+Para parar a aplicação:
+
+```bash
+docker-compose down
+```
+
+**Nota:** Na primeira execução, o Docker irá construir a imagem da aplicação. Nas execuções subsequentes, você pode usar apenas `docker-compose up` (sem `--build`).
+
 ### Modo de Desenvolvimento
+
+Para desenvolvimento local sem Docker:
+
 ```bash
 npm run dev
 ```
 A aplicação estará disponível em `http://localhost:5173` (ou outra porta indicada pelo Vite).
 
 ### Build para Produção
+
+Para gerar a build de produção localmente:
+
 ```bash
 npm run build
-
 ```
-Visualiza a versão de produção localmente.
+
+Para visualizar a versão de produção localmente, você pode usar um servidor estático como `serve`:
+
+```bash
+npm install -g serve
+serve -s dist -l 5173
+```
 
 ## 📁 Estrutura do Projeto
 
@@ -126,6 +161,11 @@ src/
 
 ## 📝 Requisitos
 
+### Para execução com Docker Compose:
+- Docker e Docker Compose instalados
+- API backend rodando e acessível
+
+### Para execução local (desenvolvimento):
 - Node.js (versão 22 ou superior recomendada)
 - npm
 - API backend rodando e acessível
