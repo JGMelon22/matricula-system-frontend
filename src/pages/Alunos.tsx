@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button, Table, Spinner, Alert } from 'reactstrap';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import type { Aluno } from '../types';
@@ -14,11 +14,7 @@ const Alunos = () => {
     const [selectedAluno, setSelectedAluno] = useState<Aluno | null>(null);
     const [showOnlyMatriculados, setShowOnlyMatriculados] = useState(false);
 
-    useEffect(() => {
-        loadAlunos();
-    }, [showOnlyMatriculados]);
-
-    const loadAlunos = async () => {
+    const loadAlunos = useCallback(async () => {
         try {
             setLoading(true);
             setError('');
@@ -32,7 +28,11 @@ const Alunos = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [showOnlyMatriculados]);
+
+    useEffect(() => {
+        loadAlunos();
+    }, [loadAlunos]);
 
     const handleDelete = async (id: string) => {
         if (!window.confirm('Tem certeza que deseja excluir este aluno?')) {
