@@ -1,14 +1,16 @@
-
 import { useEffect, useState } from 'react';
 import { Button, Card, CardBody, CardText, CardTitle, Col, Row, Spinner, Alert } from 'reactstrap';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import type { Curso } from '../types';
 import { cursoService } from '../services/cursoService';
+import CursoModal from '../components/CursoModal';
 
 const Cursos = () => {
     const [cursos, setCursos] = useState<Curso[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selectedCurso, setSelectedCurso] = useState<Curso | null>(null);
 
     useEffect(() => {
         loadCursos();
@@ -35,10 +37,29 @@ const Cursos = () => {
 
         try {
             await cursoService.delete(id);
-            loadCursos(); // Recarregar lista
+            loadCursos();
         } catch (err: any) {
             alert('Erro ao excluir curso: ' + (err.response?.data?.message || err.message));
         }
+    };
+
+    const handleOpenCreate = () => {
+        setSelectedCurso(null);
+        setModalOpen(true);
+    };
+
+    const handleOpenEdit = (curso: Curso) => {
+        setSelectedCurso(curso);
+        setModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setModalOpen(false);
+        setSelectedCurso(null);
+    };
+
+    const handleSuccess = () => {
+        loadCursos();
     };
 
     if (loading) {
@@ -54,7 +75,7 @@ const Cursos = () => {
         <div>
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2>Cursos</h2>
-                <Button color="success" onClick={() => alert('Funcionalidade de criar será implementada')}>
+                <Button color="success" onClick={handleOpenCreate}>
                     <FaPlus className="me-2" />
                     Novo Curso
                 </Button>
@@ -76,7 +97,7 @@ const Cursos = () => {
                                         <Button
                                             size="sm"
                                             color="primary"
-                                            onClick={() => alert('Funcionalidade de editar será implementada')}
+                                            onClick={() => handleOpenEdit(curso)}
                                         >
                                             <FaEdit className="me-1" />
                                             Editar
@@ -96,6 +117,13 @@ const Cursos = () => {
                     ))}
                 </Row>
             )}
+
+            <CursoModal
+                isOpen={modalOpen}
+                toggle={handleCloseModal}
+                curso={selectedCurso}
+                onSuccess={handleSuccess}
+            />
         </div>
     );
 };
