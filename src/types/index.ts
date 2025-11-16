@@ -39,6 +39,7 @@ export interface MatriculaRequest {
   cursoId: string;
 }
 
-export interface ApiError {
-  message: string;
+export interface ApiErrorResponse {
+  code: number;
+  description: string;
 }
