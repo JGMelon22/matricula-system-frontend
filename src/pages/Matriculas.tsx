@@ -23,6 +23,8 @@ import type { Aluno, Curso } from '../types';
 import { cursoService } from '../services/cursoService';
 import { alunoService } from '../services/alunoService';
 import { matriculaService } from '../services/matriculaService';
+import ErrorModal from '../components/ErrorModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const Matriculas = () => {
     const [cursos, setCursos] = useState<Curso[]>([]);
@@ -35,6 +37,11 @@ const Matriculas = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedAlunoId, setSelectedAlunoId] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [errorModalOpen, setErrorModalOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+    const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+    const [alunoToRemove, setAlunoToRemove] = useState<string | null>(null);
+    const [validationErrorOpen, setValidationErrorOpen] = useState(false);
 
     useEffect(() => {
         loadInitialData();
@@ -95,7 +102,8 @@ const Matriculas = () => {
         e.preventDefault();
 
         if (!selectedAlunoId || !selectedCurso) {
-            alert('Selecione um aluno');
+            setErrorMessage('Selecione um aluno');
+            setValidationErrorOpen(true);
             return;
         }
 
@@ -109,8 +117,9 @@ const Matriculas = () => {
             handleCloseModal();
             loadAlunosDoCurso(selectedCurso.id);
         } catch (err: any) {
-            const errorMessage = err.response?.data?.message || err.message || 'Erro ao matricular aluno';
-            alert(errorMessage);
+            const errorMsg = err.response?.data?.message || err.message || 'Erro ao matricular aluno';
+            setErrorMessage(errorMsg);
+            setErrorModalOpen(true);
         } finally {
             setSubmitting(false);
         }
@@ -119,18 +128,23 @@ const Matriculas = () => {
     const handleRemoverMatricula = async (alunoId: string) => {
         if (!selectedCurso) return;
 
-        if (!window.confirm('Tem certeza que deseja remover esta matrícula?')) {
-            return;
-        }
+        setAlunoToRemove(alunoId);
+        setConfirmModalOpen(true);
+    };
+
+    const confirmRemoveMatricula = async () => {
+        if (!alunoToRemove || !selectedCurso) return;
 
         try {
             await matriculaService.remove({
-                alunoId,
+                alunoId: alunoToRemove,
                 cursoId: selectedCurso.id
             });
             loadAlunosDoCurso(selectedCurso.id);
         } catch (err: any) {
-            alert('Erro ao remover matrícula: ' + (err.response?.data?.message || err.message));
+            const errorMsg = 'Erro ao remover matrícula: ' + (err.response?.data?.message || err.message);
+            setErrorMessage(errorMsg);
+            setErrorModalOpen(true);
         }
     };
 
@@ -286,6 +300,27 @@ const Matriculas = () => {
                     </ModalFooter>
                 </Form>
             </Modal>
+
+            <ErrorModal
+                isOpen={errorModalOpen}
+                toggle={() => setErrorModalOpen(false)}
+                message={errorMessage}
+            />
+
+            <ErrorModal
+                isOpen={validationErrorOpen}
+                toggle={() => setValidationErrorOpen(false)}
+                title="Validação"
+                message={errorMessage}
+            />
+
+            <ConfirmModal
+                isOpen={confirmModalOpen}
+                toggle={() => setConfirmModalOpen(false)}
+                onConfirm={confirmRemoveMatricula}
+                message="Tem certeza que deseja remover esta matrícula?"
+                confirmText="Remover"
+            />
         </div>
     );
 };

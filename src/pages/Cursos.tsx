@@ -4,6 +4,8 @@ import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import type { Curso } from '../types';
 import { cursoService } from '../services/cursoService';
 import CursoModal from '../components/CursoModal';
+import ErrorModal from '../components/ErrorModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const Cursos = () => {
     const [cursos, setCursos] = useState<Curso[]>([]);
@@ -11,6 +13,10 @@ const Cursos = () => {
     const [error, setError] = useState<string>('');
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedCurso, setSelectedCurso] = useState<Curso | null>(null);
+    const [errorModalOpen, setErrorModalOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+    const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+    const [cursoToDelete, setCursoToDelete] = useState<string | null>(null);
 
     useEffect(() => {
         loadCursos();
@@ -31,15 +37,20 @@ const Cursos = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!window.confirm('Tem certeza que deseja excluir este curso?')) {
-            return;
-        }
+        setCursoToDelete(id);
+        setConfirmModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!cursoToDelete) return;
 
         try {
-            await cursoService.delete(id);
+            await cursoService.delete(cursoToDelete);
             loadCursos();
         } catch (err: any) {
-            alert('Erro ao excluir curso: ' + (err.response?.data?.message || err.message));
+            const errorMsg = 'Erro ao excluir curso: ' + (err.response?.data?.message || err.message);
+            setErrorMessage(errorMsg);
+            setErrorModalOpen(true);
         }
     };
 
@@ -123,6 +134,20 @@ const Cursos = () => {
                 toggle={handleCloseModal}
                 curso={selectedCurso}
                 onSuccess={handleSuccess}
+            />
+
+            <ErrorModal
+                isOpen={errorModalOpen}
+                toggle={() => setErrorModalOpen(false)}
+                message={errorMessage}
+            />
+
+            <ConfirmModal
+                isOpen={confirmModalOpen}
+                toggle={() => setConfirmModalOpen(false)}
+                onConfirm={confirmDelete}
+                message="Tem certeza que deseja excluir este curso?"
+                confirmText="Excluir"
             />
         </div>
     );

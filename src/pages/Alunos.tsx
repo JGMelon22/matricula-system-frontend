@@ -5,6 +5,8 @@ import type { Aluno } from '../types';
 import { alunoService } from '../services/alunoService';
 import AlunoModal from '../components/AlunoModal';
 import { format } from 'date-fns';
+import ErrorModal from '../components/ErrorModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const Alunos = () => {
     const [alunos, setAlunos] = useState<Aluno[]>([]);
@@ -13,6 +15,10 @@ const Alunos = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedAluno, setSelectedAluno] = useState<Aluno | null>(null);
     const [showOnlyMatriculados, setShowOnlyMatriculados] = useState(false);
+    const [errorModalOpen, setErrorModalOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+    const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+    const [alunoToDelete, setAlunoToDelete] = useState<string | null>(null);
 
     const loadAlunos = useCallback(async () => {
         try {
@@ -35,15 +41,20 @@ const Alunos = () => {
     }, [loadAlunos]);
 
     const handleDelete = async (id: string) => {
-        if (!window.confirm('Tem certeza que deseja excluir este aluno?')) {
-            return;
-        }
+        setAlunoToDelete(id);
+        setConfirmModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!alunoToDelete) return;
 
         try {
-            await alunoService.delete(id);
+            await alunoService.delete(alunoToDelete);
             loadAlunos();
         } catch (err: any) {
-            alert('Erro ao excluir aluno: ' + (err.response?.data?.message || err.message));
+            const errorMsg = 'Erro ao excluir aluno: ' + (err.response?.data?.message || err.message);
+            setErrorMessage(errorMsg);
+            setErrorModalOpen(true);
         }
     };
 
@@ -152,6 +163,20 @@ const Alunos = () => {
                 toggle={handleCloseModal}
                 aluno={selectedAluno}
                 onSuccess={handleSuccess}
+            />
+
+            <ErrorModal
+                isOpen={errorModalOpen}
+                toggle={() => setErrorModalOpen(false)}
+                message={errorMessage}
+            />
+
+            <ConfirmModal
+                isOpen={confirmModalOpen}
+                toggle={() => setConfirmModalOpen(false)}
+                onConfirm={confirmDelete}
+                message="Tem certeza que deseja excluir este aluno?"
+                confirmText="Excluir"
             />
         </div>
     );
