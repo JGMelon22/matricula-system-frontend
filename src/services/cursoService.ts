@@ -2,10 +2,10 @@ import api from './api';
 import type { Curso, CursoRequest, PaginatedResponse } from '../types';
 
 export const cursoService = {
-    getAll: async (): Promise<Curso[]> => {
-        const response = await api.get<PaginatedResponse<Curso>>('/cursos');
-        return response.data.data; 
-      },
+    getAll: async (pageNumber: number = 1, pageSize: number = 9): Promise<PaginatedResponse<Curso>> => {
+        const response = await api.get<PaginatedResponse<Curso>>(`/cursos?pageNumber=${pageNumber}&pageSize=${pageSize}`);
+        return response.data;
+    },
     getById: async (id: string): Promise<Curso> => {
         const response = await api.get<Curso>(`/cursos/${id}`);
         return response.data;

@@ -30,7 +30,7 @@ const Home = () => {
             ]);
 
             setStats({
-                totalCursos: cursos.length,
+                totalCursos: cursos.data.length,
                 totalAlunos: alunos.length,
                 totalAlunosMatriculados: alunosMatriculados.length
             });

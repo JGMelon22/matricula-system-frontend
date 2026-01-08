@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Url base para testes locais
 // const API_BASE_URL = 'https://localhost:7034/api'; // Caso use o projeto local
-const API_BASE_URL = 'https://localhost:8081/api'; // Caso use o projeto local
+const API_BASE_URL = 'http://localhost:5238/api'; // Caso use o projeto local
 
 export const api = axios.create({
     baseURL: API_BASE_URL,

@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Button, Card, CardBody, CardText, CardTitle, Col, Row, Spinner, Alert } from 'reactstrap';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
-import type { Curso } from '../types';
+import type { Curso, PaginatedResponse } from '../types';
 import { cursoService } from '../services/cursoService';
 import CursoModal from '../components/CursoModal';
 import ErrorModal from '../components/ErrorModal';
 import ConfirmModal from '../components/ConfirmModal';
+import PaginationComponent from '../components/PaginationComponent';
 
 const Cursos = () => {
-    const [cursos, setCursos] = useState<Curso[]>([]);
+    const [paginatedData, setPaginatedData] = useState<PaginatedResponse<Curso> | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [modalOpen, setModalOpen] = useState(false);
@@ -18,16 +20,18 @@ const Cursos = () => {
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
     const [cursoToDelete, setCursoToDelete] = useState<string | null>(null);
 
+    const pageSize = 9;
+
     useEffect(() => {
         loadCursos();
-    }, []);
+    }, [currentPage]);
 
     const loadCursos = async () => {
         try {
             setLoading(true);
             setError('');
-            const data = await cursoService.getAll();
-            setCursos(data);
+            const data = await cursoService.getAll(currentPage, pageSize);
+            setPaginatedData(data);
         } catch (err: any) {
             setError('Erro ao carregar cursos. Verifique se a API está rodando.');
             console.error(err);
@@ -46,6 +50,12 @@ const Cursos = () => {
 
         try {
             await cursoService.delete(cursoToDelete);
+
+            // Se deletar o último item da página e não for a primeira página, voltar
+            if (paginatedData && paginatedData.data.length === 1 && currentPage > 1) {
+                setCurrentPage(currentPage - 1);
+            }
+
             loadCursos();
         } catch (err: any) {
             const errorMsg = 'Erro ao excluir curso: ' + (err.response?.data?.message || err.message);
@@ -73,6 +83,10 @@ const Cursos = () => {
         loadCursos();
     };
 
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    }
+
     if (loading) {
         return (
             <div className="text-center mt-5">
@@ -81,6 +95,8 @@ const Cursos = () => {
             </div>
         );
     }
+
+    const cursos = paginatedData?.data || [];
 
     return (
         <div>
@@ -97,36 +113,54 @@ const Cursos = () => {
             {cursos.length === 0 ? (
                 <Alert color="info">Nenhum curso cadastrado ainda.</Alert>
             ) : (
-                <Row>
-                    {cursos.map((curso) => (
-                        <Col md={6} lg={4} key={curso.id} className="mb-3">
-                            <Card>
-                                <CardBody>
-                                    <CardTitle tag="h5">{curso.nome}</CardTitle>
-                                    <CardText>{curso.descricao}</CardText>
-                                    <div className="d-flex gap-2">
-                                        <Button
-                                            size="sm"
-                                            color="primary"
-                                            onClick={() => handleOpenEdit(curso)}
-                                        >
-                                            <FaEdit className="me-1" />
-                                            Editar
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            color="danger"
-                                            onClick={() => handleDelete(curso.id)}
-                                        >
-                                            <FaTrash className="me-1" />
-                                            Excluir
-                                        </Button>
-                                    </div>
-                                </CardBody>
-                            </Card>
-                        </Col>
-                    ))}
-                </Row>
+                <>
+                    <Row>
+                        {cursos.map((curso) => (
+                            <Col md={6} lg={4} key={curso.id} className="mb-3">
+                                <Card>
+                                    <CardBody>
+                                        <CardTitle tag="h5">{curso.nome}</CardTitle>
+                                        <CardText>{curso.descricao}</CardText>
+                                        <div className="d-flex gap-2">
+                                            <Button
+                                                size="sm"
+                                                color="primary"
+                                                onClick={() => handleOpenEdit(curso)}
+                                            >
+                                                <FaEdit className="me-1" />
+                                                Editar
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                color="danger"
+                                                onClick={() => handleDelete(curso.id)}
+                                            >
+                                                <FaTrash className="me-1" />
+                                                Excluir
+                                            </Button>
+                                        </div>
+                                    </CardBody>
+                                </Card>
+                            </Col>
+                        ))}
+                    </Row>
+
+                    {/* Paginacao */}
+                    {paginatedData && paginatedData.totalPages > 1 && (
+                        <div className='d-flex justify-content-between align-items-center mt-4'>
+                            <div className='text-muted'>
+                                Mostrando {cursos.length} de {paginatedData.totalRecords} cursos
+                            </div>
+
+                            <PaginationComponent
+                                currentPage={currentPage}
+                                totalPages={paginatedData.totalPages}
+                                onPageChange={handlePageChange}>
+
+                            </PaginationComponent>
+                        </div>
+                    )}
+                </>
             )}
 
             <CursoModal
@@ -150,7 +184,9 @@ const Cursos = () => {
                 confirmText="Excluir"
             />
         </div>
+
     );
+
 };
 
 export default Cursos;
