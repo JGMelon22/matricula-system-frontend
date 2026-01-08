@@ -6,6 +6,12 @@ export const cursoService = {
         const response = await api.get<PaginatedResponse<Curso>>(`/cursos?pageNumber=${pageNumber}&pageSize=${pageSize}`);
         return response.data;
     },
+
+    count: async (): Promise<number> => {
+        const response = await api.get<number>('/cursos/count');
+        return response.data;
+    },
+
     getById: async (id: string): Promise<Curso> => {
         const response = await api.get<Curso>(`/cursos/${id}`);
         return response.data;

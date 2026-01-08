@@ -24,13 +24,13 @@ const Home = () => {
             setError('');
 
             const [cursos, alunos, alunosMatriculados] = await Promise.all([
-                cursoService.getAll(),
+                cursoService.count(),
                 alunoService.getAll(),
                 alunoService.getMatriculados()
             ]);
 
             setStats({
-                totalCursos: cursos.data.length,
+                totalCursos: cursos,
                 totalAlunos: alunos.length,
                 totalAlunosMatriculados: alunosMatriculados.length
             });
