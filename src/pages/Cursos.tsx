@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button, Card, CardBody, CardText, CardTitle, Col, Row, Spinner, Alert } from 'reactstrap';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import type { Curso, PaginatedResponse } from '../types';
@@ -22,11 +22,7 @@ const Cursos = () => {
 
     const pageSize = 9;
 
-    useEffect(() => {
-        loadCursos();
-    }, [currentPage]);
-
-    const loadCursos = async () => {
+    const loadCursos = useCallback(async () => {
         try {
             setLoading(true);
             setError('');
@@ -38,7 +34,11 @@ const Cursos = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [currentPage, pageSize]);
+
+    useEffect(() => {
+        loadCursos();
+    }, [loadCursos]);
 
     const handleDelete = async (id: string) => {
         setCursoToDelete(id);

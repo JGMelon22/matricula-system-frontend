@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
     Button,
     Card,
@@ -19,15 +19,17 @@ import {
     Input
 } from 'reactstrap';
 import { FaPlus, FaTrash, FaUserGraduate } from 'react-icons/fa';
-import type { Aluno, Curso } from '../types';
+import type { Aluno, Curso, PaginatedResponse } from '../types';
 import { cursoService } from '../services/cursoService';
 import { alunoService } from '../services/alunoService';
 import { matriculaService } from '../services/matriculaService';
 import ErrorModal from '../components/ErrorModal';
 import ConfirmModal from '../components/ConfirmModal';
+import PaginationComponent from '../components/PaginationComponent';
 
 const Matriculas = () => {
-    const [cursos, setCursos] = useState<Curso[]>([]);
+    const [paginatedData, setpaginatedData] = useState<PaginatedResponse<Curso> | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
     const [alunos, setAlunos] = useState<Aluno[]>([]);
     const [selectedCurso, setSelectedCurso] = useState<Curso | null>(null);
     const [alunosDoCurso, setAlunosDoCurso] = useState<Aluno[]>([]);
@@ -43,39 +45,40 @@ const Matriculas = () => {
     const [alunoToRemove, setAlunoToRemove] = useState<string | null>(null);
     const [validationErrorOpen, setValidationErrorOpen] = useState(false);
 
-    useEffect(() => {
-        loadInitialData();
-    }, []);
+    const pageSize: number = 9;
 
-    useEffect(() => {
-        if (selectedCurso) {
-            loadAlunosDoCurso(selectedCurso.id);
-        }
-    }, [selectedCurso]);
-
-    const loadInitialData = async () => {
+    const loadInitialData = useCallback(async () => {
         try {
             setLoading(true);
             setError('');
             const [cursosData, alunosData] = await Promise.all([
-                cursoService.getAll(),
+                cursoService.getAll(currentPage, pageSize),
                 alunoService.getAll()
             ]);
-            setCursos(cursosData);
+
+            setpaginatedData(cursosData);
             setAlunos(alunosData);
 
-            if (cursosData.length > 0) {
-                setSelectedCurso(cursosData[0]);
+            // Se temos cursos e nenhum esta selecionado, ou selecionado nao esta na pagina atual
+            if (cursosData.data.length > 0) {
+                const currentCursoStillVisible = cursosData.data.find(c => c.id === selectedCurso?.id);
+
+                if (!selectedCurso || !currentCursoStillVisible) {
+                    setSelectedCurso(cursosData.data[0]);
+                } else {
+                    setSelectedCurso(null);
+                }
             }
+
         } catch (err: any) {
             setError('Erro ao carregar dados. Verifique se a API está rodando.');
             console.error(err);
         } finally {
             setLoading(false);
         }
-    };
+    }, [currentPage, pageSize]);
 
-    const loadAlunosDoCurso = async (cursoId: string) => {
+    const loadAlunosDoCurso = useCallback(async (cursoId: string) => {
         try {
             setLoadingAlunos(true);
             const data = await matriculaService.getAlunosByCurso(cursoId);
@@ -86,7 +89,18 @@ const Matriculas = () => {
         } finally {
             setLoadingAlunos(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        loadInitialData();
+    }, [loadInitialData]);
+
+
+    useEffect(() => {
+        if (selectedCurso) {
+            loadAlunosDoCurso(selectedCurso.id);
+        }
+    }, [selectedCurso, loadAlunosDoCurso]);
 
     const handleOpenModal = () => {
         setSelectedAlunoId('');
@@ -132,6 +146,10 @@ const Matriculas = () => {
         setConfirmModalOpen(true);
     };
 
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    }
+
     const confirmRemoveMatricula = async () => {
         if (!alunoToRemove || !selectedCurso) return;
 
@@ -162,7 +180,9 @@ const Matriculas = () => {
         );
     }
 
-    if (cursos.length === 0) {
+    const cursos = paginatedData?.data || [];
+
+    if (paginatedData && paginatedData.totalRecords === 0) {
         return (
             <Alert color="warning">
                 Nenhum curso cadastrado. Por favor, cadastre cursos primeiro.
@@ -196,6 +216,21 @@ const Matriculas = () => {
                             </ListGroupItem>
                         ))}
                     </ListGroup>
+
+                    {/* Paginacao dos Cursos */}
+                    {paginatedData && paginatedData.totalPages > 1 && (
+                        <div className='d-flex justify-content-between align-items-center mt-4'>
+                            <div className='text-muted'>
+                                Página {currentPage} de {paginatedData.totalPages}
+                            </div>
+                            <PaginationComponent
+                                currentPage={currentPage}
+                                totalPages={paginatedData.totalPages}
+                                onPageChange={handlePageChange}
+                            ></PaginationComponent>
+                        </div>
+                    )}
+
                 </Col>
 
                 {/* Alunos Matriculados no Curso Selecionado */}
