@@ -1,15 +1,18 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Table, Spinner, Alert } from 'reactstrap';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
-import type { Aluno } from '../types';
+import type { Aluno, PaginatedResponse } from '../types';
 import { alunoService } from '../services/alunoService';
 import AlunoModal from '../components/AlunoModal';
 import { format } from 'date-fns';
 import ErrorModal from '../components/ErrorModal';
 import ConfirmModal from '../components/ConfirmModal';
+import PaginationComponent from '../components/PaginationComponent';
 
 const Alunos = () => {
-    const [alunos, setAlunos] = useState<Aluno[]>([]);
+    // const [alunos, setAlunos] = useState<Aluno[]>([]);
+    const [paginatedData, setPaginatedData] = useState<PaginatedResponse<Aluno> | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [modalOpen, setModalOpen] = useState(false);
@@ -20,37 +23,51 @@ const Alunos = () => {
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
     const [alunoToDelete, setAlunoToDelete] = useState<string | null>(null);
 
-    const loadAlunos = useCallback(async () => {
+    const pageSize = 9;
+
+    useEffect(() => {
+        loadAlunos();
+    }, [currentPage, showOnlyMatriculados]);
+
+    const loadAlunos = async () => {
         try {
             setLoading(true);
             setError('');
             const data = showOnlyMatriculados
-                ? await alunoService.getMatriculados()
-                : await alunoService.getAll();
-            setAlunos(data);
+                ? await alunoService.getMatriculados(currentPage, pageSize)
+                : await alunoService.getAll(currentPage, pageSize);
+
+            setPaginatedData(data);
         } catch (err: any) {
             setError('Erro ao carregar alunos. Verifique se a API está rodando.');
             console.error(err);
         } finally {
             setLoading(false);
         }
-    }, [showOnlyMatriculados]);
-
-    useEffect(() => {
-        loadAlunos();
-    }, [loadAlunos]);
+    };
 
     const handleDelete = async (id: string) => {
         setAlunoToDelete(id);
         setConfirmModalOpen(true);
     };
 
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    }
+
     const confirmDelete = async () => {
         if (!alunoToDelete) return;
 
         try {
             await alunoService.delete(alunoToDelete);
-            loadAlunos();
+
+            // Se deletar o ultimo item da pagina e nao for a primeira pagina, voltar
+            if (paginatedData && paginatedData.data.length === 1 && currentPage > 1) {
+                setCurrentPage(currentPage - 1);
+            } else {
+                loadAlunos();
+            }
+
         } catch (err: any) {
             const errorMsg = 'Erro ao excluir aluno: ' + (err.response?.data?.message || err.message);
             setErrorMessage(errorMsg);
@@ -77,6 +94,11 @@ const Alunos = () => {
         loadAlunos();
     };
 
+    const handleToggleMatriculados = () => {
+        setCurrentPage(1); // Reset para página 1 ao trocar filtro
+        setShowOnlyMatriculados(!showOnlyMatriculados);
+    };
+
     const formatDate = (dateString: string) => {
         return format(new Date(dateString), 'dd/MM/yyyy');
     };
@@ -90,6 +112,8 @@ const Alunos = () => {
         );
     }
 
+    const alunos = paginatedData?.data || [];
+
     return (
         <div>
             <div className="d-flex justify-content-between align-items-center mb-4">
@@ -98,7 +122,7 @@ const Alunos = () => {
                     <Button
                         color={showOnlyMatriculados ? 'secondary' : 'info'}
                         outline={!showOnlyMatriculados}
-                        onClick={() => setShowOnlyMatriculados(!showOnlyMatriculados)}
+                        onClick={handleToggleMatriculados}
                     >
                         {showOnlyMatriculados ? 'Mostrar Todos' : 'Apenas Matriculados'}
                     </Button>
@@ -118,44 +142,61 @@ const Alunos = () => {
                         : 'Nenhum aluno cadastrado ainda.'}
                 </Alert>
             ) : (
-                <Table responsive striped hover>
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>E-mail</th>
-                            <th>Data de Nascimento</th>
-                            <th>Cadastrado em</th>
-                            <th className="text-end">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {alunos.map((aluno) => (
-                            <tr key={aluno.id}>
-                                <td>{aluno.nome}</td>
-                                <td>{aluno.email}</td>
-                                <td>{formatDate(aluno.dataNascimento)}</td>
-                                <td>{formatDate(aluno.createdAt)}</td>
-                                <td className="text-end">
-                                    <Button
-                                        size="sm"
-                                        color="primary"
-                                        className="me-2"
-                                        onClick={() => handleOpenEdit(aluno)}
-                                    >
-                                        <FaEdit />
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        color="danger"
-                                        onClick={() => handleDelete(aluno.id)}
-                                    >
-                                        <FaTrash />
-                                    </Button>
-                                </td>
+                <>
+                    <Table responsive striped hover>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>E-mail</th>
+                                <th>Data de Nascimento</th>
+                                <th>Cadastrado em</th>
+                                <th className="text-end">Ações</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </Table>
+                        </thead>
+                        <tbody>
+                            {alunos.map((aluno) => (
+                                <tr key={aluno.id}>
+                                    <td>{aluno.nome}</td>
+                                    <td>{aluno.email}</td>
+                                    <td>{formatDate(aluno.dataNascimento)}</td>
+                                    <td>{formatDate(aluno.createdAt)}</td>
+                                    <td className="text-end">
+                                        <Button
+                                            size="sm"
+                                            color="primary"
+                                            className="me-2"
+                                            onClick={() => handleOpenEdit(aluno)}
+                                        >
+                                            <FaEdit />
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            color="danger"
+                                            onClick={() => handleDelete(aluno.id)}
+                                        >
+                                            <FaTrash />
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+
+                    {/* Alunos paginados */}
+                    {paginatedData && paginatedData.totalPages > 1 && (
+                        <div className="d-flex justify-content-between align-items-center mt-4">
+                            <div className="text-muted">
+                                Mostrando {alunos.length} de {paginatedData.totalRecords} alunos
+                            </div>
+
+                            <PaginationComponent
+                                currentPage={currentPage}
+                                totalPages={paginatedData.totalPages}
+                                onPageChange={handlePageChange}
+                            />
+                        </div>
+                    )}
+                </>
             )}
 
             <AlunoModal

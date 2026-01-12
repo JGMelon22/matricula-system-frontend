@@ -57,7 +57,7 @@ const Matriculas = () => {
             ]);
 
             setpaginatedData(cursosData);
-            setAlunos(alunosData);
+            setAlunos(alunosData.data);
 
             // Se temos cursos e nenhum esta selecionado, ou selecionado nao esta na pagina atual
             if (cursosData.data.length > 0) {
